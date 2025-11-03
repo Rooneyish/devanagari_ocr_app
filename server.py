@@ -11,9 +11,9 @@ app = FastAPI(
 )
 
 MODEL_PATHS = {
-    "CNN": "/home/rooneyish/Documents/Internship/devanagari_ocr/models/models/cnn_model.keras",
-    "MobileNetV2": "/home/rooneyish/Documents/Internship/devanagari_ocr/models/models/mobilenetv2_best.keras",
-    "MobileNetV2FineTuned": "/home/rooneyish/Documents/Internship/devanagari_ocr/models/models/mobilenetv2_finetuned_best.keras"
+    "CNN": "models/cnn_model.keras",
+    "MobileNetV2": "models/mobilenetv2_best.keras",
+    "MobileNetV2FineTuned": "models/mobilenetv2_finetuned_best.keras"
 }
 
 models = {name: load_model(path) for name, path in MODEL_PATHS.items()}
