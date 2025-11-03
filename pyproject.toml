@@ -9,6 +9,7 @@ dependencies = [
     "keras==3.10.0",
     "pillow>=12.0.0",
     "python-multipart>=0.0.20",
+    "streamlit>=1.51.0",
     "tensorflow==2.19.0",
     "uvicorn>=0.38.0",
 ]
