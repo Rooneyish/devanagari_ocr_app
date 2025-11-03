@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from PIL import Image
 
-FASTAPI_URL = "http://127.0.0.1:8000/predict"  
+FASTAPI_URL = "https://devanagari-ocr-app.onrender.com/predict"  
 st.set_page_config(page_title="Devanagari OCR", page_icon="🔤", layout="centered")
 
 
