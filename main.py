@@ -3,7 +3,7 @@ import requests
 from PIL import Image
 import os
 
-FASTAPI_URL = os.getenv("http://127.0.0.1:8000/predict")
+FASTAPI_URL = os.getenv("API_URL","http://127.0.0.1:8000/predict")
 st.set_page_config(page_title="Devanagari OCR", page_icon="🔤", layout="centered")
 
 
