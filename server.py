@@ -4,6 +4,12 @@ from PIL import Image, ImageOps
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 import io
+import os
+import gc  
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 app = FastAPI(
     title="Devanagari OCR API",
@@ -16,7 +22,7 @@ MODEL_PATHS = {
     "MobileNetV2FineTuned": "models/mobilenetv2_finetuned_best.keras"
 }
 
-models = {name: load_model(path) for name, path in MODEL_PATHS.items()}
+models = {}
 
 classes = [
     'character_01_ka', 'character_02_kha', 'character_03_ga', 'character_04_gha', 'character_05_kna',
@@ -50,10 +56,13 @@ def preprocessing(image_bytes, invert=True):
 
     return img_array_rgb, img_array_gray
 
+@app.get("/")
+def home():
+    return {"status": "healthy", "message": "Devanagari OCR API is live!"}
 
 @app.post("/predict")
 async def predict_image(file: UploadFile = File(...)):
-    """Predict the Devanagari character from the uploaded image using multiple models."""
+    """Predict the Devanagari character by loading models sequentially to respect RAM boundaries."""
     try:
         contents = await file.read()
         img_array_rgb, img_array_gray = preprocessing(contents, invert=True)
@@ -63,12 +72,15 @@ async def predict_image(file: UploadFile = File(...)):
         return JSONResponse(status_code=500, content={"error": f"Unexpected error: {e}"})
     
     results = {}
-    for model_name, model in models.items():
+    
+    for model_name, path in MODEL_PATHS.items():
         try:
+            current_model = load_model(path)
+            
             if model_name == "CNN":
-                prediction = model.predict(img_array_gray, verbose=0)
+                prediction = current_model.predict(img_array_gray, verbose=0)
             else:
-                prediction = model.predict(img_array_rgb, verbose=0)
+                prediction = current_model.predict(img_array_rgb, verbose=0)
 
             pred_idx = int(np.argmax(prediction))
             confidence = float(np.max(prediction))
@@ -77,8 +89,17 @@ async def predict_image(file: UploadFile = File(...)):
                 "predicted_class": classes[pred_idx],
                 "confidence": round(confidence, 4)
             }
+            
+            del current_model
+            from tensorflow.keras import backend as K
+            K.clear_session()
+            gc.collect()
+
         except Exception as e:
             results[model_name] = {"error": f"Prediction failed: {e}"}
 
     return JSONResponse(content=results)
 
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
